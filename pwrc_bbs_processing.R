@@ -30,6 +30,11 @@ bbsfifty$stopcount <- do.call(paste, c(bbsfifty[8:57], sep=";"))
 
 bbsfifty<-bbsfifty[,-c(8:57)]
 
+# format country code in country_codes table
+
+country_codes$country_code<-sprintf("%03d",country_codes$country_code)
+
+
 # format country code in main table
 
 bbsfifty$countrynum<-sprintf("%03d",bbsfifty$countrynum)
@@ -124,28 +129,34 @@ bbsfifty_join <- bbsfifty_join_temp
 
 # clean up
 
-colnames(bbsfifty)
+colnames(bbsfifty_join)
 
 # rename columns
 
-colnames(bbsfifty)[1]<-"routedataid"
+colnames(bbsfifty_join)[1]<-"routedataid"
 
-colnames(bbsfifty)[4]<-"route"
+colnames(bbsfifty_join)[4]<-"route"
 
-colnames(bbsfifty)[5]<-"rpid"
+colnames(bbsfifty_join)[5]<-"rpid"
 
-colnames(bbsfifty)[7]<-"aou"
+colnames(bbsfifty_join)[7]<-"aou"
+
+colnames(bbsfifty_join)[15]<-"lat"
+
+colnames(bbsfifty_join)[16]<-"lon"
+
+colnames(bbsfifty_join)[17]<-"active"
 
 
 # trim 
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
-bsnfiaprivfinal$clean_provided_scientific_name<-trim(bsnfiaprivfinal$clean_provided_scientific_name)
+bbsfifty_join$species_name<-trim(bbsfifty_join$species_name)
 
 # write out
 
-write.csv(bbsfifty_temp,"bbsfifty2_partial_processed_2015-02-09.csv",row.names=FALSE)
+write.csv(bbsfifty_join,"bbsfifty2_partial_processed_2015-02-09.csv",row.names=FALSE)
 
 
 
