@@ -94,8 +94,13 @@ bbsfifty1_join <- bbsfifty1_join_temp
 
 # add observations from all stops
 
+bbsfifty_temp$stopstotalcount <- rowSums(bbsfifty_temp[, c(8:57)])
+
 # concatenate into counts for each stop
 
+bbsfifty_temp<-bbsfifty
+
+bbsfifty_temp$stopcount <- do.call(paste, c(bbsfifty_temp[8:57], sep=";"))
 
 # clean up
 
@@ -106,10 +111,9 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 bsnfiaprivfinal$clean_provided_scientific_name<-trim(bsnfiaprivfinal$clean_provided_scientific_name)
 
 
-
 # write out
 
-write.csv(bbsfifty1_join,"bbsfifty1_processed_2015-02-09.csv",row.names=FALSE)
+write.csv(bbsfifty_temp,"bbsfifty2_partial_processed_2015-02-09.csv",row.names=FALSE)
 
 
 
