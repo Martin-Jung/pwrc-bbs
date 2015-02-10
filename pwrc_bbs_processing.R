@@ -1,4 +1,6 @@
+# joined tables bbsfifty1
 
+# working on bbsfifty2
 
 # format country code in main table
 
@@ -109,7 +111,6 @@ bbsfifty_temp$stopcount <- do.call(paste, c(bbsfifty_temp[8:57], sep=";"))
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 bsnfiaprivfinal$clean_provided_scientific_name<-trim(bsnfiaprivfinal$clean_provided_scientific_name)
-
 
 # write out
 
