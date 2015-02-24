@@ -1,51 +1,30 @@
 # joined tables bbsfifty
 
-# working on bbsfifty_2
+# working on bbsfifty_1
 
-# import data
+##--                            --##
 
-# bbs observations
+##--country|species|state tables--##
 
-# routes
+##--                            --##
 
-# species list
+species_list <- read.csv("~/R/pwrc-bbs/species_list.csv")
 
-# state codes
+country_codes <- read.csv("~/R/pwrc-bbs/country_codes.csv")
 
-# country codes
+state_codes <- read.csv("~/R/pwrc-bbs/state_codes.csv")
 
-# add observations from all stops
+routes <- read.csv("~/R/pwrc-bbs/routes.csv")
 
-bbsfifty$stopstotalcount <- rowSums(bbsfifty[, c(8:57)])
 
-# concatenate into counts for each stop
 
-bbsfifty_temp<-bbsfifty
+# format aou code in species_list table
 
-bbsfifty$stopcount <- do.call(paste, c(bbsfifty[8:57], sep=";"))
-
-# clean up
-
-# remove unwanted columns
-
-bbsfifty<-bbsfifty[,-c(8:57)]
+species_list$aou<-sprintf("%05d",species_list$aou)
 
 # format country code in country_codes table
 
 country_codes$country_code<-sprintf("%03d",country_codes$country_code)
-
-
-# format country code in main table
-
-bbsfifty$countrynum<-sprintf("%03d",bbsfifty$countrynum)
-
-# format state code in main table
-
-bbsfifty$statenum<-sprintf("%02d",bbsfifty$statenum)
-
-# format route code in main table
-
-bbsfifty$Route<-sprintf("%03d",bbsfifty$Route)
 
 # format country code in state_codes table
 
@@ -67,14 +46,6 @@ routes$statenum<-sprintf("%02d",routes$statenum)
 
 routes$Route<-sprintf("%03d",routes$Route)
 
-# concatenate country and state code in main table to create lookup field for country/state
-
-bbsfifty$cntrystatenum <- paste(bbsfifty$countrynum, bbsfifty$statenum, sep='')
-
-# concatenate country, state, route code in main table to create lookup field for country/state/route lat/lon
-
-bbsfifty$cntrystateroutenum <- paste(bbsfifty$cntrystatenum, bbsfifty$Route, sep='')
-
 # concatenate country, state in state_codes table to create lookup field for state
 
 state_codes$cntrystatenum <- paste(state_codes$countrynum, state_codes$regioncode, sep='')
@@ -87,65 +58,112 @@ routes$cntrystatenum <- paste(routes$countrynum, routes$statenum, sep='')
 
 routes$cntrystateroutenum <- paste(routes$cntrystatenum, routes$Route, sep='')
 
-# format aou code in main table
 
-bbsfifty$AOU<-sprintf("%05d",bbsfifty$AOU)
+##--                            --##
 
-# format aou code in species_list table
+##--bbs table format and process--##
 
-species_list$aou<-sprintf("%05d",species_list$aou)
+##--                            --##
 
-# lookup species scientific name
+# import bbs data
 
-speciesaoujoinstr <- "select bbsfifty.*,species_list.english_common_name,species_list.species_name from bbsfifty left join species_list on bbsfifty.AOU=species_list.aou"
+bbsfifty <- read.csv("~/R/pwrc-bbs/FiftyStopData/fifty10.csv")
 
-bbsfifty_join_temp <- sqldf(speciesaoujoinstr)
+# add observations from all stops
 
-bbsfifty_join <-bbsfifty_join_temp
+bbsfifty$stopstotalcount <- rowSums(bbsfifty[, c(8:57)])
 
-# Join main table and country lookup to retrieve country
+# concatenate into counts for each stop
 
-countryjoinstr <- "select bbsfifty_join.*, country_codes.country from bbsfifty_join left join country_codes on bbsfifty_join.countrynum = country_codes.country_code"
-
-bbsfifty_join_temp <- sqldf(countryjoinstr)
-
-bbsfifty_join <- bbsfifty_join_temp
-
-# join main table and state_codes to retrieve state
-
-statejoinstr <- "select bbsfifty_join.*, state_codes.state from bbsfifty_join left join state_codes on bbsfifty_join.cntrystatenum = state_codes.cntrystatenum"
-
-bbsfifty_join_temp <- sqldf(statejoinstr)
-
-bbsfifty_join <- bbsfifty_join_temp
-
-# lookup lat/lon
-
-latlonjoinstr <- "select bbsfifty_join.*, routes.Lati, routes.Longi, routes.Active from bbsfifty_join left join routes on bbsfifty_join.cntrystateroutenum = routes.cntrystateroutenum"
-
-bbsfifty_join_temp <- sqldf(latlonjoinstr)
-
-bbsfifty_join <- bbsfifty_join_temp
+bbsfifty$stopcount <- do.call(paste, c(bbsfifty[8:57], sep=";"))
 
 # clean up
 
-colnames(bbsfifty_join)
+# remove unwanted columns
+
+bbsfifty<-bbsfifty[,-c(8:57)]
+
+# format country code in main table
+
+bbsfifty$countrynum<-sprintf("%03d",bbsfifty$countrynum)
+
+# format state code in main table
+
+bbsfifty$statenum<-sprintf("%02d",bbsfifty$statenum)
+
+# format route code in main table
+
+bbsfifty$Route<-sprintf("%03d",bbsfifty$Route)
+
+# concatenate country and state code in main table to create lookup field for country/state
+
+bbsfifty$cntrystatenum <- paste(bbsfifty$countrynum, bbsfifty$statenum, sep='')
+
+# concatenate country, state, route code in main table to create lookup field for country/state/route lat/lon
+
+bbsfifty$cntrystateroutenum <- paste(bbsfifty$cntrystatenum, bbsfifty$Route, sep='')
+
+# Join main table and country lookup to retrieve country
+
+countryjoinstr <- "select bbsfifty.*, country_codes.country from bbsfifty left join country_codes on bbsfifty.countrynum = country_codes.country_code"
+
+bbsfifty_join_temp <- sqldf(countryjoinstr)
+
+# join main table and state_codes to retrieve state
+
+statejoinstr <- "select bbsfifty_join_temp.*, state_codes.state from bbsfifty_join_temp left join state_codes on bbsfifty_join_temp.cntrystatenum = state_codes.cntrystatenum"
+
+bbsfifty_join_temp <- sqldf(statejoinstr)
+
+# format aou code in main table
+
+bbsfifty_join_temp$AOU<-sprintf("%05d",bbsfifty_join_temp$AOU)
+
+# lookup species scientific name
+
+speciesaoujoinstr <- "select bbsfifty_join_temp.*,species_list.english_common_name,species_list.species_name from bbsfifty_join_temp left join species_list on bbsfifty_join_temp.AOU=species_list.aou"
+
+bbsfifty_join_temp <- sqldf(speciesaoujoinstr)
+
+# lookup lat/lon
+
+latlonjoinstr <- "select bbsfifty_join_temp.*, routes.Lati, routes.Longi, routes.Active from bbsfifty_join_temp left join routes on bbsfifty_join_temp.cntrystateroutenum = routes.cntrystateroutenum"
+
+bbsfifty_join_temp <- sqldf(latlonjoinstr)
+
+# clean up
+
 
 # rename columns
 
-colnames(bbsfifty_join)[1]<-"routedataid"
+colnames(bbsfifty_join_temp)[1]<-"routedataid"
 
-colnames(bbsfifty_join)[4]<-"route"
+colnames(bbsfifty_join_temp)[4]<-"route"
 
-colnames(bbsfifty_join)[5]<-"rpid"
+colnames(bbsfifty_join_temp)[5]<-"rpid"
 
-colnames(bbsfifty_join)[7]<-"aou"
+colnames(bbsfifty_join_temp)[7]<-"aou"
 
-colnames(bbsfifty_join)[15]<-"lat"
+colnames(bbsfifty_join_temp)[12]<-"iso_country"
 
-colnames(bbsfifty_join)[16]<-"lon"
+colnames(bbsfifty_join_temp)[13]<-"provided_state_name"
 
-colnames(bbsfifty_join)[17]<-"active"
+colnames(bbsfifty_join_temp)[14]<-"provided_common_name"
+
+colnames(bbsfifty_join_temp)[15]<-"provided_scientific_name"
+
+colnames(bbsfifty_join_temp)[16]<-"latitude"
+
+colnames(bbsfifty_join_temp)[17]<-"longitude"
+
+colnames(bbsfifty_join_temp)[18]<-"active"
+
+
+# write to file append
+
+write.table(bbsfifty_join_temp, file = "bbs_preprocessed_10.txt", append = FALSE, quote = FALSE, sep= "\t", eol = "\n", na = "", dec = ".", row.names = FALSE, col.names = TRUE)
+
+write.table(bbsfifty_join_temp, file = "bbs_preprocessed_6-10.txt", append = TRUE, quote = FALSE, sep= "\t", eol = "\n", na = "", dec = ".", row.names = FALSE, col.names = TRUE)
 
 
 # trim 
@@ -156,7 +174,7 @@ bbsfifty_join$species_name<-trim(bbsfifty_join$species_name)
 
 # write out
 
-write.csv(bbsfifty_join,"bbsfifty2_partial_processed_2015-02-09.csv",row.names=FALSE)
+write.csv(bbsfifty_join,"bbsfifty_partial_processed_2015-02-09.csv",row.names=FALSE)
 
 
 
